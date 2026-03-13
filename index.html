@@ -408,8 +408,40 @@
   <script>
     const STORAGE_KEY = 'eisenhower-matrix-tasks';
 
-    let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    if (!tasks.q1) tasks = { q1: [], q2: [], q3: [], q4: [] };
+    const DEFAULT_TASKS = {
+      q1: [
+        { id: 'a1', text: 'TERESSA INVOICE', done: false },
+        { id: 'a2', text: 'TEACH VICTOR HOW TO PULL DATA FROM SEO', done: true },
+        { id: 'a3', text: 'DANIEL CALVO', done: false },
+        { id: 'a4', text: 'LAUREN MILCHEN', done: false },
+        { id: 'a5', text: 'RAYMUNDO CARRERA', done: false },
+        { id: 'a6', text: 'GEORGIA WILSON', done: false },
+        { id: 'a7', text: 'JESSIE LOVELACE', done: false },
+        { id: 'a8', text: 'MICHAEL BARNHART', done: false },
+        { id: 'a9', text: 'IS PAYMENT', done: false }
+      ],
+      q2: [
+        { id: 'b1', text: 'PREPARE FOR TUESDAY MEETING', done: false },
+        { id: 'b2', text: 'FINISH FLORIDA LICENSING', done: false },
+        { id: 'b3', text: 'WORK ON BUILDING TRADING BOT', done: false },
+        { id: 'b4', text: 'SPEAK WITH E.M. ABOUT CANCELLING PORCH AND PAYING HIM', done: false },
+        { id: 'b5', text: 'Start packing', done: false },
+        { id: 'b6', text: 'William Wilton', done: true },
+        { id: 'b7', text: 'Send Ed Word doc on how to add leads, and pull outcomes', done: false },
+        { id: 'b8', text: 'Send Ed Word doc on how to add leads, and pull outcomes', done: false },
+        { id: 'b9', text: 'Pay Lily', done: false }
+      ],
+      q3: [],
+      q4: [
+        { id: 'd1', text: 'ARI BOTANI PDF', done: false }
+      ]
+    };
+
+    let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+    if (!tasks || !tasks.q1) {
+      tasks = DEFAULT_TASKS;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
 
     function save() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
