@@ -500,7 +500,16 @@
 
     function toggleDone(id, quadrant) {
       const task = tasks[quadrant].find(t => t.id === id);
-      if (task) { task.done = !task.done; save(); renderAll(); }
+      if (task) {
+        task.done = !task.done;
+        // Move completed tasks to bottom, uncompleted back to top
+        tasks[quadrant] = [
+          ...tasks[quadrant].filter(t => !t.done),
+          ...tasks[quadrant].filter(t => t.done)
+        ];
+        save();
+        renderAll();
+      }
     }
 
     function deleteTask(id, quadrant) {
