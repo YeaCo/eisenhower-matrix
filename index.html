@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eisenhower Matrix</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+
+    .quick-add {
+      width: 100%;
+      max-width: 1200px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .quick-add input {
+      flex: 1;
+      padding: 12px 16px;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .quick-add input::placeholder { color: #666; }
+    .quick-add input:focus { border-color: rgba(239, 68, 68, 0.6); }
+
+    .axis-labels {
+      display: grid;
+      grid-template-columns: 40px 1fr 1fr;
+      grid-template-rows: 30px 1fr 1fr;
+      width: 100%;
+      max-width: 1200px;
+      gap: 0;
+    }
+
+    .axis-label-top {
+      grid-column: 2 / 4;
+      grid-row: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #666;
+    }
+
+    .axis-label-top span:first-child { margin-right: auto; padding-left: 25%; }
+    .axis-label-top span:last-child { margin-left: auto; padding-right: 25%; }
+
+    .axis-label-left {
+      grid-column: 1;
+      grid-row: 2 / 4;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .axis-label-left span {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #666;
+    }
+
+    .matrix {
+      grid-column: 2 / 4;
+      grid-row: 2 / 4;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px;
+      width: 100%;
+      min-height: 680px;
+    }
+
+    .quadrant {
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.2s;
+      position: relative;
+    }
+
+    .quadrant.drag-over {
+      outline: 2px dashed rgba(255,255,255,0.4);
+      outline-offset: -4px;
+    }
+
+    .q1 { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); }
+    .q2 { background: rgba(59, 130, 246, 0.12); border: 1px solid rgba(59, 130, 246, 0.25); }
+    .q3 { background: rgba(234, 179, 8, 0.12); border: 1px solid rgba(234, 179, 8, 0.25); }
+    .q4 { background: rgba(107, 114, 128, 0.12); border: 1px solid rgba(107, 114, 128, 0.25); }
+
+    .quadrant-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .quadrant-title {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .q1 .quadrant-title { color: #ef4444; }
+    .q2 .quadrant-title { color: #3b82f6; }
+    .q3 .quadrant-title { color: #eab308; }
+    .q4 .quadrant-title { color: #6b7280; }
+
+    .quadrant-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .q1 .quadrant-label { color: #fca5a5; background: rgba(239, 68, 68, 0.2); }
+    .q2 .quadrant-label { color: #93c5fd; background: rgba(59, 130, 246, 0.2); }
+    .q3 .quadrant-label { color: #fde047; background: rgba(234, 179, 8, 0.2); }
+    .q4 .quadrant-label { color: #9ca3af; background: rgba(107, 114, 128, 0.2); }
+
+    .task-list {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 60px;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      cursor: grab;
+      transition: background 0.15s, transform 0.15s;
+      user-select: none;
+    }
+
+    .task-item:hover { background: rgba(255, 255, 255, 0.1); }
+    .task-item:active { cursor: grabbing; }
+    .task-item.dragging { opacity: 0.4; transform: scale(0.96); }
+
+    .drop-indicator {
+      height: 3px;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 2px;
+      margin: 2px 0;
+      transition: opacity 0.1s;
+    }
+
+    .task-checkbox {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.25);
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .task-checkbox:hover { border-color: rgba(255,255,255,0.5); }
+
+    .task-checkbox.checked {
+      border-color: #4ade80;
+      background: #4ade80;
+    }
+
+    .task-checkbox.checked::after {
+      content: '✓';
+      color: #0f0f0f;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.3;
+      color: #d4d4d4;
+    }
+
+    .task-text.completed {
+      text-decoration: line-through;
+      opacity: 0.45;
+    }
+
+    .task-delete {
+      opacity: 0;
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+      flex-shrink: 0;
+    }
+
+    .task-item:hover .task-delete { opacity: 1; }
+    .task-delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.15); }
+
+    .add-task-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      background: none;
+      border: 1px dashed rgba(255,255,255,0.12);
+      border-radius: 8px;
+      color: #666;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      margin-top: 4px;
+    }
+
+    .add-task-btn:hover {
+      border-color: rgba(255,255,255,0.25);
+      color: #999;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .add-task-input {
+      width: 100%;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      margin-top: 4px;
+    }
+
+    .add-task-input::placeholder { color: #555; }
+    .add-task-input:focus { border-color: rgba(255,255,255,0.3); }
+
+    .clear-completed {
+      margin-top: 20px;
+      padding: 8px 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .clear-completed:hover {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+    }
+
+    .stats {
+      margin-top: 12px;
+      font-size: 12px;
+      color: #555;
+    }
+
+    .touch-clone {
+      position: fixed;
+      pointer-events: none;
+      z-index: 1000;
+      opacity: 0.85;
+      transform: scale(1.04);
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #d4d4d4;
+      font-size: 13px;
+      max-width: 300px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 16px 10px; }
+      h1 { font-size: 22px; }
+      .subtitle { font-size: 12px; }
+      .quick-add input { font-size: 14px; padding: 10px 12px; }
+
+      .axis-labels {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+      }
+      .axis-label-top, .axis-label-left { display: none; }
+      .matrix {
+        grid-column: 1;
+        grid-row: 1;
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto auto;
+        min-height: auto;
+      }
+      .quadrant { min-height: 120px; }
+      .quadrant-label { font-size: 9px; padding: 2px 6px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Eisenhower Matrix</h1>
+  <p class="subtitle">Prioritize by urgency and importance — drag tasks between quadrants</p>
+
+  <div class="quick-add">
+    <input type="text" id="quickAddInput" placeholder="What would you like to work on?" autofocus>
+  </div>
+
+  <div class="axis-labels">
+    <div class="axis-label-top">
+      <span>Urgent</span>
+      <span>Not Urgent</span>
+    </div>
+    <div class="axis-label-left">
+      <span>Important &nbsp; ← &nbsp; Not Important</span>
+    </div>
+    <div class="matrix">
+      <div class="quadrant q1" data-quadrant="q1">
+        <div class="quadrant-header">
+          <span class="quadrant-title">Do First</span>
+          <span class="quadrant-label">Urgent & Important</span>
+        </div>
+        <div class="task-list" data-quadrant="q1"></div>
+        <button class="add-task-btn" data-quadrant="q1">+ Add task</button>
+      </div>
+
+      <div class="quadrant q2" data-quadrant="q2">
+        <div class="quadrant-header">
+          <span class="quadrant-title">Schedule</span>
+          <span class="quadrant-label">Not Urgent & Important</span>
+        </div>
+        <div class="task-list" data-quadrant="q2"></div>
+        <button class="add-task-btn" data-quadrant="q2">+ Add task</button>
+      </div>
+
+      <div class="quadrant q3" data-quadrant="q3">
+        <div class="quadrant-header">
+          <span class="quadrant-title">Delegate</span>
+          <span class="quadrant-label">Urgent & Not Important</span>
+        </div>
+        <div class="task-list" data-quadrant="q3"></div>
+        <button class="add-task-btn" data-quadrant="q3">+ Add task</button>
+      </div>
+
+      <div class="quadrant q4" data-quadrant="q4">
+        <div class="quadrant-header">
+          <span class="quadrant-title">Eliminate</span>
+          <span class="quadrant-label">Not Urgent & Not Important</span>
+        </div>
+        <div class="task-list" data-quadrant="q4"></div>
+        <button class="add-task-btn" data-quadrant="q4">+ Add task</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="clear-completed" id="clearCompleted">Clear completed tasks</button>
+  <div class="stats" id="stats"></div>
+
+  <script>
+    const STORAGE_KEY = 'eisenhower-matrix-tasks';
+
+    let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    if (!tasks.q1) tasks = { q1: [], q2: [], q3: [], q4: [] };
+
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    }
+
+    function renderAll() {
+      ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+        const list = document.querySelector(`.task-list[data-quadrant="${q}"]`);
+        list.innerHTML = '';
+        tasks[q].forEach(task => {
+          list.appendChild(createTaskEl(task, q));
+        });
+      });
+      updateStats();
+    }
+
+    function createTaskEl(task, quadrant) {
+      const el = document.createElement('div');
+      el.className = 'task-item';
+      el.draggable = true;
+      el.dataset.id = task.id;
+      el.dataset.quadrant = quadrant;
+
+      const checkbox = document.createElement('div');
+      checkbox.className = 'task-checkbox' + (task.done ? ' checked' : '');
+      checkbox.addEventListener('click', () => toggleDone(task.id, quadrant));
+
+      const text = document.createElement('span');
+      text.className = 'task-text' + (task.done ? ' completed' : '');
+      text.textContent = task.text;
+      text.addEventListener('dblclick', () => editTask(task.id, quadrant, text));
+
+      const del = document.createElement('button');
+      del.className = 'task-delete';
+      del.textContent = '×';
+      del.addEventListener('click', () => deleteTask(task.id, quadrant));
+
+      el.appendChild(checkbox);
+      el.appendChild(text);
+      el.appendChild(del);
+
+      el.addEventListener('dragstart', e => {
+        el.classList.add('dragging');
+        e.dataTransfer.setData('text/plain', JSON.stringify({ id: task.id, from: quadrant }));
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      el.addEventListener('dragend', () => el.classList.remove('dragging'));
+
+      return el;
+    }
+
+    function toggleDone(id, quadrant) {
+      const task = tasks[quadrant].find(t => t.id === id);
+      if (task) { task.done = !task.done; save(); renderAll(); }
+    }
+
+    function deleteTask(id, quadrant) {
+      tasks[quadrant] = tasks[quadrant].filter(t => t.id !== id);
+      save();
+      renderAll();
+    }
+
+    function editTask(id, quadrant, textEl) {
+      const task = tasks[quadrant].find(t => t.id === id);
+      if (!task) return;
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = task.text;
+      input.className = 'add-task-input';
+      input.style.marginTop = '0';
+      input.style.padding = '4px 8px';
+
+      textEl.replaceWith(input);
+      input.focus();
+      input.select();
+
+      const finish = () => {
+        const val = input.value.trim();
+        if (val) task.text = val;
+        save();
+        renderAll();
+      };
+
+      input.addEventListener('blur', finish);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') finish();
+        if (e.key === 'Escape') { input.blur(); }
+      });
+    }
+
+    function addTask(quadrant, text) {
+      tasks[quadrant].push({ id: generateId(), text, done: false });
+      save();
+      renderAll();
+    }
+
+    // Quick add at top → goes to Q1
+    document.getElementById('quickAddInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const val = e.target.value.trim();
+        if (val) { addTask('q1', val); e.target.value = ''; }
+      }
+    });
+
+    // Drag and drop — reorder within + move between quadrants
+    function clearDropIndicators() {
+      document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    }
+
+    function getDropIndex(taskList, y) {
+      const items = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+      for (let i = 0; i < items.length; i++) {
+        const rect = items[i].getBoundingClientRect();
+        if (y < rect.top + rect.height / 2) return i;
+      }
+      return items.length;
+    }
+
+    document.querySelectorAll('.quadrant').forEach(q => {
+      const taskList = q.querySelector('.task-list');
+
+      q.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        q.classList.add('drag-over');
+
+        // Show drop indicator
+        clearDropIndicators();
+        q.classList.add('drag-over');
+        const dropIdx = getDropIndex(taskList, e.clientY);
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator';
+        const items = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+        if (items[dropIdx]) {
+          taskList.insertBefore(indicator, items[dropIdx]);
+        } else {
+          taskList.appendChild(indicator);
+        }
+      });
+
+      q.addEventListener('dragleave', e => {
+        if (!q.contains(e.relatedTarget)) {
+          clearDropIndicators();
+        }
+      });
+
+      q.addEventListener('drop', e => {
+        e.preventDefault();
+        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+        const toQuadrant = q.dataset.quadrant;
+        const dropIdx = getDropIndex(taskList, e.clientY);
+        clearDropIndicators();
+
+        // Remove from source
+        const taskIdx = tasks[data.from].findIndex(t => t.id === data.id);
+        if (taskIdx === -1) return;
+        const [task] = tasks[data.from].splice(taskIdx, 1);
+
+        // Insert at drop position (adjust if same quadrant and moved down)
+        let insertAt = dropIdx;
+        if (data.from === toQuadrant && taskIdx < dropIdx) insertAt--;
+        tasks[toQuadrant].splice(Math.max(0, insertAt), 0, task);
+
+        save();
+        renderAll();
+      });
+    });
+
+    // Add task buttons
+    document.querySelectorAll('.add-task-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const quadrant = btn.dataset.quadrant;
+        if (btn.nextElementSibling?.classList?.contains('add-task-input')) return;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'add-task-input';
+        input.placeholder = 'Type a task and press Enter…';
+        btn.parentElement.appendChild(input);
+        input.focus();
+
+        const finish = () => {
+          const val = input.value.trim();
+          if (val) addTask(quadrant, val);
+          input.remove();
+        };
+
+        input.addEventListener('keydown', e => {
+          if (e.key === 'Enter') finish();
+          if (e.key === 'Escape') input.remove();
+        });
+
+        input.addEventListener('blur', finish);
+      });
+    });
+
+    // Clear completed
+    document.getElementById('clearCompleted').addEventListener('click', () => {
+      ['q1', 'q2', 'q3', 'q4'].forEach(q => {
+        tasks[q] = tasks[q].filter(t => !t.done);
+      });
+      save();
+      renderAll();
+    });
+
+    function updateStats() {
+      const total = Object.values(tasks).flat().length;
+      const done = Object.values(tasks).flat().filter(t => t.done).length;
+      document.getElementById('stats').textContent = total
+        ? `${total} task${total !== 1 ? 's' : ''} · ${done} completed`
+        : 'No tasks yet — add one to get started';
+    }
+
+    // Touch drag-and-drop for mobile
+    let touchDragData = null;
+    let touchClone = null;
+
+    document.addEventListener('touchstart', e => {
+      const item = e.target.closest('.task-item');
+      if (!item || e.target.closest('.task-checkbox') || e.target.closest('.task-delete')) return;
+
+      const touch = e.touches[0];
+      touchDragData = { id: item.dataset.id, from: item.dataset.quadrant, startY: touch.clientY, startX: touch.clientX, started: false, item };
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      if (!touchDragData) return;
+      const touch = e.touches[0];
+      const dx = Math.abs(touch.clientX - touchDragData.startX);
+      const dy = Math.abs(touch.clientY - touchDragData.startY);
+
+      if (!touchDragData.started && (dx > 8 || dy > 8)) {
+        touchDragData.started = true;
+        touchDragData.item.classList.add('dragging');
+        touchClone = document.createElement('div');
+        touchClone.className = 'touch-clone';
+        touchClone.textContent = touchDragData.item.querySelector('.task-text').textContent;
+        document.body.appendChild(touchClone);
+      }
+
+      if (!touchDragData.started) return;
+      e.preventDefault();
+
+      touchClone.style.left = (touch.clientX - 100) + 'px';
+      touchClone.style.top = (touch.clientY - 20) + 'px';
+
+      clearDropIndicators();
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const quadrant = target?.closest('.quadrant');
+      if (quadrant) {
+        quadrant.classList.add('drag-over');
+        const taskList = quadrant.querySelector('.task-list');
+        const dropIdx = getDropIndex(taskList, touch.clientY);
+        const indicator = document.createElement('div');
+        indicator.className = 'drop-indicator';
+        const items = [...taskList.querySelectorAll('.task-item:not(.dragging)')];
+        if (items[dropIdx]) taskList.insertBefore(indicator, items[dropIdx]);
+        else taskList.appendChild(indicator);
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', e => {
+      if (!touchDragData || !touchDragData.started) { touchDragData = null; return; }
+
+      const touch = e.changedTouches[0];
+      if (touchClone) { touchClone.remove(); touchClone = null; }
+      touchDragData.item.classList.remove('dragging');
+
+      const target = document.elementFromPoint(touch.clientX, touch.clientY);
+      const quadrant = target?.closest('.quadrant');
+
+      if (quadrant) {
+        const toQuadrant = quadrant.dataset.quadrant;
+        const taskList = quadrant.querySelector('.task-list');
+        const dropIdx = getDropIndex(taskList, touch.clientY);
+
+        const taskIdx = tasks[touchDragData.from].findIndex(t => t.id === touchDragData.id);
+        if (taskIdx !== -1) {
+          const [task] = tasks[touchDragData.from].splice(taskIdx, 1);
+          let insertAt = dropIdx;
+          if (touchDragData.from === toQuadrant && taskIdx < dropIdx) insertAt--;
+          tasks[toQuadrant].splice(Math.max(0, insertAt), 0, task);
+          save();
+        }
+      }
+
+      clearDropIndicators();
+      renderAll();
+      touchDragData = null;
+    });
+
+    renderAll();
+  </script>
+</body>
+</html>
